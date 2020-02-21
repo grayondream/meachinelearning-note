@@ -78,7 +78,7 @@ $$
 $$
 b=\frac{1}{|S|} \sum_{s \in S}\left(y_{s}-\sum_{i \in S} \alpha_{i} y_{i} x_{i}^{\mathrm{T}} x_{s}\right)
 $$
-
+&emsp;&emsp;参考[SMO算法](https://blog.csdn.net/jesmine_gu/article/details/84024702)
 ## 1.4 核函数
 &emsp;&emsp;对于非线性可分问题可以通过核函数映射将非线性可分问题转换成线性可分问题，即将问题转换成（$\phi$为映射函数）：
 $$
@@ -130,6 +130,7 @@ $$
 {\kappa\left(\boldsymbol{x}_{m}, \boldsymbol{x}_{1}\right)} & {\cdots} & {\kappa\left(\boldsymbol{x}_{m}, \boldsymbol{x}_{j}\right)} & {\cdots} & {\kappa\left(\boldsymbol{x}_{m}, \boldsymbol{x}_{m}\right)}
 \end{array}\right]
 $$
+
 ![](kernel.png)
 &emsp;&emsp;若$κ_1,κ_2$为核函数则：
 - 对任意正数$γ_1,γ_2$其线性组合$γ_1κ_1+γ_2κ_2$也是核函数；
@@ -137,8 +138,267 @@ $$
 - 对任意函数$g(x)$,$κ(x,z)=g(x)κ_1(x,z)g(z)$也是核函数。
 
 ## 1.5 软间隔
+&emsp;&emsp;如果数据并不是线性可分的，则可以允许支持向量在一些样本上出错，即软间隔。硬间隔要求所有样本满足可分条件，软间隔要求不满足约束的样本金坑能的少，则优化条件为：
+$$
+\min _{\boldsymbol{w}, b} \frac{1}{2}\|\boldsymbol{w}\|^{2}+C \sum_{i=1}^{m} \ell_{0 / 1}\left(y_{i}\left(\boldsymbol{w}^{\mathrm{T}} \boldsymbol{x}_{i}+b\right)-1\right)
+$$
+&emsp;&emsp;其中$C>0,\ell_{0 / 1}$为0/1损失函数：
+$$
+\ell_{0 / 1}(z)=\left\{\begin{array}{ll}
+{1,} & {\text { if } z<0} \\
+{0,} & {\text { otherwise }}
+\end{array}\right.
+$$
+&emsp;&emsp;当$C→∞$时，所有样本满足约束即硬间隔，如果$C$为有限值则允许部分不满足约束。但是01损失函数数学性不好不易求解因此可以用以下损失哈市农户代替：
+- hinge损失$\ell_{hinge}(z)=max(0,1-z)$;
+- 指数损失：$\ell_{exp}(z)=e^{-z}$;
+- 对率损失：$\ell_{log}(z)=log(1+e^{-z})$。
 
-## 1.6
+![](loss.png)
 
-## 参考
+&emsp;&emsp;如果使用hingle损失则优化条件为：
+$$
+\min_{\boldsymbol{w}, b} \frac{1}{2}\|\boldsymbol{w}\|^{2}+C \sum_{i=1}^{m} \max \left(0,1-y_{i}\left(\boldsymbol{w}^{\mathrm{T}} \boldsymbol{x}_{i}+b\right)\right)
+$$
+&emsp;&emsp;引入松弛变量$\xi_i≥0$，则得到软间隔支持向量机：
+$$
+\begin{aligned}
+&\min_{\boldsymbol{w}, \boldsymbol{b}, \boldsymbol{ξ}_{\boldsymbol{i}}} \frac{1}{2}\|\boldsymbol{w}\|^{2}+C \sum_{i=1}^{m} \xi_{i}\\
+&s.t. y_{i}\left(\boldsymbol{w}^{\mathrm{T}} \boldsymbol{x}_{i}+b\right) \geqslant 1-\xi_{i} \\
+&\xi_{i} \geqslant 0, i=1,2, \dots, m   
+\end{aligned}
+$$
+&emsp;&emsp;利用上面同样的解法，引入拉格朗日乘子：
+$$
+\begin{aligned}
+L(\boldsymbol{w}, b, \boldsymbol{\alpha}, \boldsymbol{\xi}, \boldsymbol{\mu})=& \frac{1}{2}\|\boldsymbol{w}\|^{2}+C \sum_{i=1}^{m} \xi_{i} \\
+&+\sum_{i=1}^{m} \alpha_{i}\left(1-\xi_{i}-y_{i}\left(\boldsymbol{w}^{\mathrm{T}} \boldsymbol{x}_{i}+b\right)\right)-\sum_{i=1}^{m} \mu_{i} \xi_{i}
+\end{aligned}
+$$
+&emsp;&emsp;对偶问题为：
+$$
+\begin{array}{ll}
+{\max _{\alpha}} & {\sum_{i=1}^{m} \alpha_{i}-\frac{1}{2} \sum_{i=1}^{m} \sum_{j=1}^{m} \alpha_{i} \alpha_{j} y_{i} y_{j} \boldsymbol{x}_{i}^{\mathrm{T}} \boldsymbol{x}_{j}} \\
+{\text { s.t. }} & {\sum_{i=1}^{m} \alpha_{i} y_{i}=0} \\
+{} & {0 \leqslant \alpha_{i} \leqslant C, \quad i=1,2, \ldots, m}
+\end{array}
+$$
+&emsp;&emsp;KKT条件为：
+$$
+\left\{\begin{array}{l}
+{\alpha_{i} \geqslant 0, \quad \mu_{i} \geqslant 0} \\
+{y_{i} f\left(x_{i}\right)-1+\xi_{i} \geqslant 0} \\
+{\alpha_{i}\left(y_{i} f\left(x_{i}\right)-1+\xi_{i}\right)=0} \\
+{\xi_{i} \geqslant 0, \mu_{i} \xi_{i}=0}
+\end{array}\right.
+$$
+
+## 1.6 正则化
+&emsp;&emsp;软间隔支持向量机无论替换成什么损失函数都具有以下形式：
+$$
+\min _{f} \Omega(f)+C \sum_{i=1}^{m} \ell\left(f\left(\boldsymbol{x}_{i}\right), y_{i}\right)
+$$
+&emsp;&emsp;其中第一项为结构风险，用于描述模型本身的性质；第二行为经验风险，用于猫鼠数据和模型的契合程度。从经验风险最小化的角度来看，$Ω(f)$表述了我们希望获得具有何种性质的模型(例如希望获得复杂度较小的模型),这为引入领域知识和用户意图提供了途径;另一方面，该信息有助于削减假设空间从而降低了最小化训练误差的过拟合风险.从这个角度来说，上式称为"正则化"(regularization) 问题，$Ω(f)$称为正则化项，C则称为正则化常数
+## 1.7 支持向量回归(Support Vector Regression)
+&emsp;&emsp;SVR假设能够容忍$f(x)$和$y$之间最多有$ε$的偏差，则相当于构建了一个宽度为$2ε$的间隔带，落入间隔里面便是正确预测的样本否则为预测错误的样本。则SVR问题的形式为：
+$$
+\min _{\boldsymbol{w}, b} \frac{1}{2}\|\boldsymbol{w}\|^{2}+C \sum_{i=1}^{m} \ell_{i}\left(f\left(\boldsymbol{x}_{i}\right)-y_{i}\right)
+$$
+&emsp;&emsp;$C$为正则化常数，$\ell_{ε}$为$ε-不敏感损失函数：
+$$
+\ell_{\epsilon}(z)=\left\{\begin{array}{ll}
+{0,} & {\text { if }|z| \leqslant \epsilon} \\
+{|z|-\epsilon,} & {\text { otherwise }}
+\end{array}\right.
+$$
+![](e.png)
+&emsp;&emsp;引入松弛边来那个则优化问题变为：
+
+$$
+\begin{aligned}
+&\min _{\boldsymbol{w}, b, \xi_{i}, \hat{\xi}_{i}} \frac{1}{2}\|\boldsymbol{w}\|^{2}+C \sum_{i=1}^{m}\left(\xi_{i}+\hat{\xi}_{i}\right)\\
+&\text { s.t. } f\left(x_{i}\right)-y_{i} \leqslant \epsilon+\xi_{i}\\
+&y_{i}-f\left(\boldsymbol{x}_{i}\right) \leqslant \epsilon+\hat{\xi}_{i}\\
+&\xi_{i} \geqslant 0, \hat{\xi}_{i} \geqslant 0, i=1,2, \ldots, m
+\end{aligned}
+$$
+
+&emsp;&emsp;用拉格朗日乘子法求解：
+
+$$
+\begin{array}{l}
+{L(\boldsymbol{w}, b, \boldsymbol{\alpha}, \hat{\boldsymbol{\alpha}}, \boldsymbol{\xi}, \hat{\boldsymbol{\xi}}, \boldsymbol{\mu}, \hat{\boldsymbol{\mu}})} \\
+{=\frac{1}{2}\|\boldsymbol{w}\|^{2}+C \sum_{i=1}^{m}\left(\xi_{i}+\hat{\xi}_{i}\right)-\sum_{i=1}^{m} \mu_{i} \xi_{i}-\sum_{i=1}^{m} \hat{\mu}_{i} \hat{\xi}_{i}} \\
+{+\sum_{i=1}^{m} \alpha_{i}\left(f\left(\boldsymbol{x}_{i}\right)-y_{i}-\epsilon-\xi_{i}\right)+\sum_{i=1}^{m} \hat{\alpha}_{i}\left(y_{i}-f\left(\boldsymbol{x}_{i}\right)-\epsilon-\hat{\xi}_{i}\right)}
+\end{array}
+$$
+&emsp;&emsp;SVR对偶问题为：
+
+$$
+\begin{aligned}
+\max _{\boldsymbol{\alpha}, \hat{\boldsymbol{\alpha}}} & \sum_{i=1}^{m} y_{i}\left(\hat{\alpha}_{i}-\alpha_{i}\right)-\epsilon\left(\hat{\alpha}_{i}+\alpha_{i}\right) \\
+&-\frac{1}{2} \sum_{i=1}^{m} \sum_{j=1}^{m}\left(\hat{\alpha}_{i}-\alpha_{i}\right)\left(\hat{\alpha}_{j}-\alpha_{j}\right) \boldsymbol{x}_{i}^{\mathrm{T}} \boldsymbol{x}_{j} \\
+\text { s.t. } & \sum_{i=1}^{m}\left(\hat{\alpha}_{i}-\alpha_{i}\right)=0 \\
+& 0 \leqslant \alpha_{i}, \hat{\alpha}_{i} \leqslant C
+\end{aligned}
+$$
+
+&emsp;&emsp;KKT条件为：
+
+$$
+\left\{\begin{array}{l}
+{\alpha_{i}\left(f\left(\boldsymbol{x}_{i}\right)-y_{i}-\epsilon-\xi_{i}\right)=0} \\
+{\hat{\alpha}_{i}\left(y_{i}-f\left(\boldsymbol{x}_{i}\right)-\epsilon-\hat{\xi}_{i}\right)=0} \\
+{\alpha_{i} \hat{\alpha}_{i}=0, \xi_{i} \hat{\xi}_{i}=0} \\
+{\left(C-\alpha_{i}\right) \xi_{i}=0,\left(C-\hat{\alpha}_{i}\right) \hat{\xi}_{i}=0}
+\end{array}\right.
+$$
+
+# 2 实现
+## 2.1 代码实现
+&emsp;&emsp;k_tup中将mode设为'line'或者rbf便可以切换有核和无核。
+```python
+class platt_smo(object):
+    '''
+    @brief  引入核函数
+    '''
+    def __init__(self, data, label, c, toler, k_tup):
+        data = np.mat(data)
+        label = np.mat(label)
+        
+        self.x = data
+        self.c = c
+        self.label = label.transpose()
+        self.tol = toler
+        self.m = np.shape(data)[0]
+        self.alphas = np.mat(np.zeros((self.m,1)))
+        self.b = 0
+        self.e_cache = np.mat(np.zeros((self.m, 2)))
+        self.k = np.mat(np.zeros((self.m,self.m)))
+        for i in range(self.m):
+            self.k[:,i] = kernel_trans(self.x, self.x[i,:], k_tup)
+            
+    def calc_ek(self, k):
+        fk = float(np.multiply(self.alphas,self.label).T* self.k[:,k] + self.b)
+        ek = fk - float(self.label[k])
+        return ek
+        
+    def select_j_rand(self, i, m):
+    	j = i                                 
+    	while (j == i):
+    		j = int(random.uniform(0, m))
+    	return j
+ 
+    def select_j(self, i, ei):
+    	max_k = -1; 
+    	max_delta_e = 0; 
+    	ej = 0 						
+    	self.e_cache[i] = [1,ei]  									
+    	valid_ecache_list = np.nonzero(self.e_cache[:,0].A)[0]		
+    	if (len(valid_ecache_list)) > 1:						
+    		for k in valid_ecache_list:   						
+    			if k == i: 
+    			    continue 							
+    			ek = self.calc_ek(k)							
+    			delta_e = abs(ei - ek)						
+    			if (delta_e > max_delta_e):						
+    				max_k = k; 
+    				max_delta_e = delta_e; 
+    				ej = ek
+    		return max_k, ej									
+    	else:   												
+    		j = self.select_j_rand(i, self.m)							
+    		ej = self.calc_ek(j)								
+    	return j, ej 			
+
+    def update_ek(self, k):
+    	ek = self.calc_ek(k)									
+    	self.e_cache[k] = [1,ek]									
+     
+    def clip_alpha(self, aj,h,l):
+    	if aj > h: 
+    		aj = h
+    	if l > aj:
+    		aj = l
+    	return aj
+
+    def innerl(self, i):	
+    	ei = self.calc_ek(i)
+    	if ((self.label[i] * ei < -self.tol) and (self.alphas[i] < self.c)) or ((self.label[i] * ei > self.tol) and (self.alphas[i] > 0)):
+    		j,ej = self.select_j(i, ei)
+    		alpha_i_old = self.alphas[i].copy(); 
+    		alpha_j_old = self.alphas[j].copy();
+    		if (self.label[i] != self.label[j]):
+    			l = max(0, self.alphas[j] - self.alphas[i])
+    			h = min(self.c, self.c + self.alphas[j] - self.alphas[i])
+    		else:
+    			l = max(0, self.alphas[j] + self.alphas[i] - self.c)
+    			h = min(self.c, self.alphas[j] + self.alphas[i])
+    		if l == h: 
+    			return 0
+
+    		eta = 2.0 * self.k[i,j] - self.k[i,i] - self.k[j,j] #changed for kernel
+    		if eta >= 0: 
+    			return 0
+    			
+    		self.alphas[j] -= self.label[j] * (ei - ej)/eta
+    		self.alphas[j] = self.clip_alpha(self.alphas[j],h,l)
+    		self.update_ek(j)
+    		if (abs(self.alphas[j] - alpha_j_old) < 0.00001): 
+    			#print("alpha_j变化太小")
+    			return 0
+
+    		self.alphas[i] += self.label[j]*self.label[i]*(alpha_j_old - self.alphas[j])
+    		self.update_ek(i)
+    		b1 = self.b - ei- self.label[i]*(self.alphas[i]-alpha_i_old)*self.k[i,i] - self.label[j]*(self.alphas[j]-alpha_j_old)*self.k[i,j]
+    		b2 = self.b - ej- self.label[i]*(self.alphas[i]-alpha_i_old)*self.k[i,j]- self.label[j]*(self.alphas[j]-alpha_j_old)*self.k[j,j]
+    		if (0 < self.alphas[i]) and (self.c > self.alphas[i]): 
+    		    self.b = b1
+    		elif (0 < self.alphas[j]) and (self.c > self.alphas[j]): 
+    		    self.b = b2
+    		else: 
+    		    self.b = (b1 + b2)/2.0
+    		
+    		return 1
+    	else: 
+    		return 0
+ 
+    def smo_p(self, epochs):
+    	iter = 0 																						
+    	entire_set = True; 
+    	alpha_pairs_changed = 0
+    	while (iter < epochs) and ((alpha_pairs_changed > 0) or (entire_set)):							
+    		alpha_pairs_changed = 0
+    		if entire_set:																					
+    			for i in range(self.m):        
+    				alpha_pairs_changed += self.innerl(i)												
+    				#print("全样本遍历:第%d次迭代 样本:%d, alpha优化次数:%d" % (iter,i,alpha_pairs_changed))
+    			iter += 1
+    		else: 																						
+    			non_bound_is = np.nonzero((self.alphas.A > 0) * (self.alphas.A < self.c))[0]						
+    			for i in non_bound_is:
+    				alpha_pairs_changed += self.innerl(i)
+    				#print("非边界遍历:第%d次迭代 样本:%d, alpha优化次数:%d" % (iter,i,alpha_pairs_changed))
+    			iter += 1
+    			
+    		if entire_set:																				
+    			entire_set = False
+    		elif (alpha_pairs_changed == 0):																
+    			entire_set = True  
+    			
+    		#print("迭代次数: %d" % iter)
+    		
+    	return self.b,self.alphas 		
+```
+
+## 2.2 结果
+![](smo.png)
+![](full_svm.png)
+&emsp;&emsp;有核的k影响错误率：
+![](err.png)
+&emsp;&emsp;手写识别笔记本跑不动不跑了。
+
+# 3 参考
 [对偶问题](https://blog.csdn.net/fkyyly/article/details/86488582)
+[【机器学习】：SMO算法理解](https://blog.csdn.net/jesmine_gu/article/details/84024702)
+[《机器学习实战》—SVM](https://blog.csdn.net/weixin_42314808/article/details/81001586)
