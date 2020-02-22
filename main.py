@@ -4,6 +4,7 @@ from src.cart import cart_test
 from src.bayes import bayes_test
 from src.logistic import logistic_test
 from src.svm import svm_test
+from src.bp import bp_test
 
 
 def main():
@@ -12,7 +13,8 @@ def main():
     #cart_test()
     #bayes_test()
     #logistic_test()    
-    svm_test()
+    #svm_test()
+    bp_test()
     
     
 if __name__ == "__main__":
