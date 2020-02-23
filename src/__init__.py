@@ -5,3 +5,4 @@ import src.bayes
 import src.logistic
 import src.bp
 import src.adaboost
+import src.regression

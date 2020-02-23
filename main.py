@@ -6,6 +6,8 @@ from src.logistic import logistic_test
 from src.svm import svm_test
 from src.bp import bp_test
 from src.adaboost import ada_test
+from src.regression import regress_test
+
 
 def main():
     #knn_test()
@@ -15,7 +17,8 @@ def main():
     #logistic_test()    
     #svm_test()
     #bp_test()
-    ada_test()    
+    #ada_test()    
+    regress_test()
     
 if __name__ == "__main__":
     main()    
