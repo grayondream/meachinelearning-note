@@ -5,7 +5,7 @@ from src.bayes import bayes_test
 from src.logistic import logistic_test
 from src.svm import svm_test
 from src.bp import bp_test
-
+from src.adaboost import ada_test
 
 def main():
     #knn_test()
@@ -14,8 +14,8 @@ def main():
     #bayes_test()
     #logistic_test()    
     #svm_test()
-    bp_test()
-    
+    #bp_test()
+    ada_test()    
     
 if __name__ == "__main__":
     main()    
