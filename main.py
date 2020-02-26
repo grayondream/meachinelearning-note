@@ -8,7 +8,7 @@ from src.bp import bp_test
 from src.adaboost import ada_test
 from src.regression import regress_test
 from src.kmeans import k_means_test
-
+from src.apriori import apriori_test
 
 def main():
     #knn_test()
@@ -20,7 +20,8 @@ def main():
     #bp_test()
     #ada_test()    
     #regress_test()
-    k_means_test()
+    #k_means_test()
+	apriori_test()
 	
 if __name__ == "__main__":
     main()    

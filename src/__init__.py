@@ -7,3 +7,4 @@ import src.bp
 import src.adaboost
 import src.regression
 import src.kmeans
+import src.apriori
